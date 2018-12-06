@@ -127,7 +127,6 @@ void resp_404(int fd)
 
     file_free(filedata);
 }
-
 /**
  * Read and return a file from disk or cache
  */
@@ -142,19 +141,29 @@ void get_file(int fd, struct cache *cache, char *request_path)
     char *mime_type;
 
     snprintf(filepath, sizeof filepath, "%s%s", SERVER_ROOT, request_path);
-    filedata = file_load(filepath);
 
-    if (filedata == NULL)
+    struct cache_entry *ce = cache_get(cache, filepath);
+
+    if (ce == NULL)
     {
-        resp_404(fd);
-        return;
+        filedata = file_load(filepath);
+
+        if (filedata == NULL)
+        {
+            resp_404(fd);
+            return;
+        }
+        mime_type = mime_type_get(filepath);
+
+        send_response(fd, "HTTP/1.1 200 OK", mime_type, filedata->data, filedata->size);
+
+        cache_put(cache, filepath, mime_type, filedata->data, filedata->size);
+        file_free(filedata);
     }
-
-    mime_type = mime_type_get(filepath);
-
-    send_response(fd, "HTTP/1.1 200 OK", mime_type, filedata->data, filedata->size);
-
-    file_free(filedata);
+    else
+    {
+        send_response(fd, "HTTP/1.1 200 OK", ce->content_type, ce->content, ce->content_length);
+    }
 }
 
 /**
