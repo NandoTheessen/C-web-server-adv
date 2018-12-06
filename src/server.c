@@ -55,11 +55,17 @@ int send_response(int fd, char *header, char *content_type, void *body, int cont
 
     // Build HTTP response and store it in response
 
-    response[25599] = '\0';
     ///////////////////
     // IMPLEMENT ME! //
     ///////////////////
-    int response_length = sprintf(response, "%s\nContent-type: %s\nContent-length: %d\n\n", header, content_type, content_length);
+    time_t t1 = time(NULL);
+    struct tm *ltime = localtime(&t1);
+
+    int response_length = sprintf(response, "%s\n"
+                                            "Date: %s"
+                                            "Content-type: %s\n"
+                                            "Content-length: %d\n\n",
+                                  header, asctime(ltime), content_type, content_length);
 
     memcpy(response + response_length, body, content_length);
 
@@ -130,6 +136,25 @@ void get_file(int fd, struct cache *cache, char *request_path)
     ///////////////////
     // IMPLEMENT ME! //
     ///////////////////
+
+    char filepath[4096];
+    struct file_data *filedata;
+    char *mime_type;
+
+    snprintf(filepath, sizeof filepath, "%s%s", SERVER_ROOT, request_path);
+    filedata = file_load(filepath);
+
+    if (filedata == NULL)
+    {
+        resp_404(fd);
+        return;
+    }
+
+    mime_type = mime_type_get(filepath);
+
+    send_response(fd, "HTTP/1.1 200 OK", mime_type, filedata->data, filedata->size);
+
+    file_free(filedata);
 }
 
 /**
@@ -169,7 +194,6 @@ void handle_http_request(int fd, struct cache *cache)
     ///////////////////
     sscanf(request, "%s %s %s", request_type, request_path, request_protocol);
     // Read the three components of the first request line
-    printf("%s %s %s\n", request_type, request_path, request_protocol);
     // If GET, handle the   get endpoints
     if (strcmp(request_type, "GET") == 0)
     {
@@ -179,9 +203,10 @@ void handle_http_request(int fd, struct cache *cache)
         }
         else
         {
-            resp_404(fd);
+            get_file(fd, cache, request_path);
         }
     }
+    printf("before memcpy\n");
     //    Check if it's /d20 and handle that special case
     //    Otherwise serve the requested file by calling get_file()
 
