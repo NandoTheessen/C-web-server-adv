@@ -142,6 +142,16 @@ void cache_free(struct cache *cache)
     free(cache);
 }
 
+void cleanup_lru(struct cache *cache)
+{
+    while (cache->cur_size > cache->max_size)
+    {
+        struct cache_entry *tail = dllist_remove_tail(cache);
+        hashtable_delete(cache->index, tail->path);
+        free_entry(tail);
+        cache->cur_size--;
+    }
+}
 /**
  * Store an entry in the cache
  *
@@ -163,16 +173,6 @@ void cache_put(struct cache *cache, char *path, char *content_type, void *conten
     cleanup_lru(cache);
 }
 
-void cleanup_lru(struct cache *cache)
-{
-    while (cache->cur_size > cache->max_size)
-    {
-        struct cache_entry *tail = dllist_remove_tail(cache);
-        hashtable_delete(cache->index, tail->path);
-        free_entry(tail);
-        cache->cur_size--;
-    }
-}
 /**
  * Retrieve an entry from the cache
  */
