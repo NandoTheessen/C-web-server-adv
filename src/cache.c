@@ -35,6 +35,9 @@ void free_entry(struct cache_entry *entry)
     ///////////////////
     // IMPLEMENT ME! //
     ///////////////////
+    free(entry->content_type);
+    free(entry->content);
+    free(entry->path);
     free(entry);
 }
 
