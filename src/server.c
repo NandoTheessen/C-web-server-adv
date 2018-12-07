@@ -217,7 +217,6 @@ void handle_http_request(int fd, struct cache *cache)
             get_file(fd, cache, request_path);
         }
     }
-    printf("before memcpy\n");
     //    Check if it's /d20 and handle that special case
     //    Otherwise serve the requested file by calling get_file()
 
