@@ -12,19 +12,20 @@ struct cache_entry *alloc_entry(char *path, char *content_type, void *content, i
     ///////////////////
     // IMPLEMENT ME! //
     ///////////////////
-    struct cache_entry *cache_entry = malloc(sizeof(cache_entry));
-    cache_entry->content_length = content_length;
+    struct cache_entry *ce = malloc(sizeof *ce);
 
-    cache_entry->content = malloc(content_length);
-    memcpy(cache_entry->content, content, content_length);
+    ce->path = malloc(strlen(path) + 1);
+    strcpy(ce->path, path);
 
-    cache_entry->content_type = malloc(strlen(content_type) + 1);
-    strcpy(cache_entry->content_type, content_type);
+    ce->content_type = malloc(strlen(content_type) + 1);
+    strcpy(ce->content_type, content_type);
 
-    cache_entry->path = malloc(strlen(path) + 1);
-    strcpy(cache_entry->path, path);
+    ce->content_length = content_length;
 
-    return cache_entry;
+    ce->content = malloc(content_length);
+    memcpy(ce->content, content, content_length);
+
+    return ce;
 }
 
 /**
@@ -117,14 +118,14 @@ struct cache *cache_create(int max_size, int hashsize)
     // IMPLEMENT ME! //
     ///////////////////
 
-    struct cache *cache = malloc(sizeof(cache));
-    cache->index = hashtable_create(hashsize, NULL);
-    cache->cur_size = 0;
-    cache->max_size = max_size;
-    cache->head = NULL;
-    cache->tail = NULL;
+    struct cache *nc = malloc(sizeof *nc);
+    nc->index = hashtable_create(hashsize, NULL);
+    nc->cur_size = 0;
+    nc->max_size = max_size;
+    nc->head = NULL;
+    nc->tail = NULL;
 
-    return cache;
+    return nc;
 }
 
 void cache_free(struct cache *cache)
@@ -152,7 +153,6 @@ void cleanup_lru(struct cache *cache)
         struct cache_entry *tail = dllist_remove_tail(cache);
         hashtable_delete(cache->index, tail->path);
         free_entry(tail);
-        cache->cur_size--;
     }
 }
 /**
@@ -170,7 +170,7 @@ void cache_put(struct cache *cache, char *path, char *content_type, void *conten
 
     struct cache_entry *ce = alloc_entry(path, content_type, content, content_length);
     dllist_insert_head(cache, ce);
-    hashtable_put(cache->index, path, content);
+    hashtable_put(cache->index, path, ce);
     cache->cur_size++;
 
     cleanup_lru(cache);

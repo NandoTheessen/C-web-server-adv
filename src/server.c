@@ -195,12 +195,14 @@ void handle_http_request(int fd, struct cache *cache)
         perror("recv");
         return;
     }
-    char request_type[256];
+    char request_type[8];
     char request_protocol[256];
     char request_path[1024];
     ///////////////////
     // IMPLEMENT ME! //
     ///////////////////
+    request[bytes_recvd] = '\0';
+
     sscanf(request, "%s %s %s", request_type, request_path, request_protocol);
     // Read the three components of the first request line
     // If GET, handle the   get endpoints

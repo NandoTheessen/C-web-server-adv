@@ -1,3 +1,5 @@
 *.o
 
 server
+cache_tests
+cache_tests.log
